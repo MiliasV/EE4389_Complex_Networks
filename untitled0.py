@@ -91,19 +91,19 @@ clustCoef = g.transitivity_undirected(mode="nan")
 
 #What is the average hopcount E[H] of the shortest paths between all node 
 #pairs?  What is the diameter H max? Well according with her slides this term 
-#question resfers to the betweenness of the graph
+#question resfers to the closeness of the graph
 
-betnGr = g.betweenness() #array with the betweenness property for each link
-avgBetGr = np.average(betnGr)#average result of the betweenness array
-maxBet = np.nanmax(betnGr) #max value of the betweenness array.
+betnGr = g.closeness() #array with the closeness property for each link
+avgBetGr = np.average(betnGr)#average result of the closeness array
+maxBet = np.nanmax(betnGr) #max value of the closeness array.
 
 #diamHop = g.get_diameter(directed="True",unconn="True",weights="None")
 #avgHop = g.get_all_shortest_paths(vertices,to="None",mode="ALL") 
 #I try the code with the line from above, got the same result,
 #just in case that you doubt about the method.
 
-#according with the console the average hopcount is 89.086419753086403
-#the max diameter according with the array is 401.240452195
+#according with the console the average hopcount is 0.365761267373
+#the max diameter according with the array is 0.409475465313
 
 #QUESTION 6
 #Has this network the small-world property? Justify your conclusion quantitatively.

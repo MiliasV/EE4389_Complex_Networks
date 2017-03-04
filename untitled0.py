@@ -122,10 +122,14 @@ clustCoef = g.transitivity_undirected(mode="nan")
 betnGr = g.closeness() #array with the closeness property for each link
 avgBetGr = np.average(betnGr)#average result of the closeness array
 maxBet = np.nanmax(betnGr) #max value of the closeness array.
+<<<<<<< HEAD
 #Below I compute the betweenness values as well
 betwe = g.betweenness()
 avgB = np.average(betwe)
 maxBe = np.nanmax(avgB)
+=======
+
+>>>>>>> 3a8cc928c9433df87919c444f5a4afab41b2382e
 #diamHop = g.get_diameter(directed="True",unconn="True",weights="None")
 #avgHop = g.get_all_shortest_paths(vertices,to="None",mode="ALL") 
 #I try the code with the line from above, got the same result,

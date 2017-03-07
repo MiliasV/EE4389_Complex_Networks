@@ -6,7 +6,7 @@ import networkx as nx
 import csv
 import pickle
 import time
-import numpy
+import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -45,7 +45,7 @@ def create_edgelist_per_time(file): #create edgelist
                 timeD[t]=[]
                 timeD[t].append((vertex1, vertex2))
 
-def plot_It(d, mycolor):
+def plot_Dict(d, mycolor):
     for t in d:
         plt.scatter(t,d[t], color = mycolor, s=50)
 
@@ -61,6 +61,8 @@ def create_aggr_network(file):
             G.add_edge(vertex1,vertex2)
     return G   
 
+def intersect(a, b):
+    return list(set(a) & set(b))
 #######################################################################################################################################################################
 ################################################################################################################################################################
 
@@ -83,7 +85,7 @@ total_number_of_nodes = aggr_graph.number_of_nodes()
 ########################################
 # Stimulation of the temporal network
 ########################################
-for node in range(1,30 ):#total_number_of_nodes+1):
+for node in range(1, total_number_of_nodes+1):
     #for node in range
     print("node", node)
     allInf = [node] # List with all the currently infected nodes
@@ -117,41 +119,102 @@ for node in range(1,30 ):#total_number_of_nodes+1):
 
 end = time.time()
 print(end - start)
-########################################
-# Computations
-########################################
 
-############# Computation of the Average Number of Infected nodes E|I(t)|
+###############
+# Computations#
+###############
+
+###################################################################
+# (9) Computation of the Average Number of Infected nodes E|I(t)| #
+###################################################################
 avg = {}
 var = {}
 for t in nodesD[0]:   # for all times
     #print t
     timeList = [d[t] for d in nodesD]
-    avg[t] = numpy.mean(timeList)
-    var[t] = numpy.std(timeList)
-#plot_It(avg, "red")
-#plot_It(var, "green")
-#plt.show()
+    avg[t] = np.mean(timeList)
+    var[t] = np.std(timeList)
 
-########################################
-# Ranking of the most influential nodes
-########################################
+save_obj(avg, "average9")
+save_obj(var, "var9")
+
+plot_Dict(avg, "red")
+plot_Dict(var, "green")
+plt.show()
+
+#############################################
+# (10) Ranking of the most influential nodes#
+#############################################
 #infl = {}
 infl =[]
 rankVar = (80*total_number_of_nodes)/100
 for i in range(0,len(nodesD)):
     #print i, nodesD[i]#, nodesD[i][k]
     #infl[i]
+    infl.append((i, min(k for k in nodesD[i] if nodesD[i][k] >= rankVar))) #[(node, time),..]
+R =  [int(tup[0]) for tup in sorted(infl, key=lambda x: x[1])] #Ranking of influence
 
-    infl.append((i, min(k for k in nodesD[i] if nodesD[i][k] >= rankVar)))
-#for i in nodesD:
-#    print i
-print infl
-
-
+save_obj(R, "R10")
 ########################################
-# Degree & Clustering Coefficient
+# (11) Degree & Clustering Coefficient #
 ########################################
+degreeTupleList = []
+clustTupleList = []
+
+#TODO: not so many transformations! More efficiently! 
+degreeList = list(aggr_graph.degree(aggr_graph.nodes()).values())
+clustD = nx.clustering(aggr_graph)
+
+# transform degree list into a sorted ordered list of nodes according to degree
+for i in range(0, len(degreeList)-1):
+    degreeTupleList.append((i,degreeList[i]))
+D =  [int(tup[0]) for tup in sorted(degreeTupleList, key=lambda x: x[1], reverse=True)]
+#print degreeList
+save_obj(D, "R11")
+
+# transform clust. coef. list into a sorted ordered list of nodes according to clust. coef.
+for i in clustD:
+    clustTupleList.append((i, clustD[i]))
+C = [int(tup[0]) for tup in sorted(clustTupleList, key=lambda x: x[1], reverse=True)]
+#print clustList
+save_obj(C, "R11")
+
+#######################
+# Computation of rRDf #
+#######################
+rRDf = {}
+for f in np.arange(0.05,0.55,0.05):
+    print f
+    lastElement = int(f*len(D))
+    rRDf[f] = len(intersect(R[:lastElement], D[:lastElement]))/len(R[:lastElement])
+    #print f, rRDf[f]
+#print rRDf
+
+######################
+# Computation of rRCf#
+######################
+rRCf = {}
+for f in np.arange(0.05,0.55,0.05):
+    print f
+    lastElement = int(f*len(C))
+    rRDf[f] = len(intersect(R[:lastElement], C[:lastElement]))/len(R[:lastElement])
+
+save_obj(rRDf, "rRDf11")
+save_obj(rRCf, "rRCf11")
+
+plot_Dict(rRDf, "red")
+plot_Dict(rRCf, "green")
+plt.show()
 
 
-    
+################################
+# (12) Other centrality metrics#
+################################
+
+#Betweeness ????
+
+#A temporal metric??? 
+
+################################
+# (13) What can be improved?   #
+################################

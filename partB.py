@@ -8,7 +8,7 @@ import pickle
 import time
 import numpy as np
 import matplotlib.pyplot as plt
-
+from random import randint
 
 
 start = time.time()
@@ -45,9 +45,26 @@ def create_edgelist_per_time(file): #create edgelist
                 timeD[t]=[]
                 timeD[t].append((vertex1, vertex2))
 
-def plot_Dict(d, mycolor):
+def create_edgelist_per_random_time(file): #create edgelist 
+    with open(file, "rb") as csvfile:
+        mydata = csv.reader(csvfile, delimiter=',', quotechar='|')
+        for row in mydata:
+            vertex1 = int(row[0])
+            vertex2 = int(row[1])
+            t = randint(1,5846)
+        
+            # Create edgelist per time - Adding one edge at a time
+            if t in timeD:
+                timeD[t].append((vertex1, vertex2))
+            else:
+                timeD[t]=[]
+                timeD[t].append((vertex1, vertex2))
+
+def plot_Dict(d, err, mycolor):
     for t in d:
-        plt.scatter(t,d[t], color = mycolor, s=50)
+        #plt.scatter(t,d[t], color = mycolor, s=50)
+        plt.errorbar(t, d[t], err[t],  fmt='o', color=mycolor)
+
 
 def create_aggr_network(file):
     G=nx.Graph()    
@@ -82,9 +99,9 @@ create_edgelist_per_time("data.csv")      # this could have been done only once.
 aggr_graph = create_aggr_network("data.csv")
 total_number_of_nodes = aggr_graph.number_of_nodes()
 
-########################################
-# Stimulation of the temporal network
-########################################
+#########################################
+## Stimulation of the temporal network
+#########################################
 for node in range(1, total_number_of_nodes+1):
     #for node in range
     print("node", node)
@@ -92,31 +109,34 @@ for node in range(1, total_number_of_nodes+1):
     inf = {}  # Dictionary with the infected nodes per time
   
     
-    for t in timeD: #Creating the network topology per time
+#    for t in timeD: #Creating the network topology per time
+    for t in range(1,max(timeD)+1): #Creating the network topology per time
         #print("time",t)
         # if all nodes infected stop
-        if len(allInf)==total_number_of_nodes:
-                inf[t] = total_number_of_nodes
-            #break
-        G = create_graph(timeD[t]) # Create the graph that corresponds to this time
-        
-        graphs = list(nx.connected_component_subgraphs(G)) # find the connected subgraphs
-        
-        for subgraph in graphs:
-            for sub_node in subgraph.nodes():             # for each node in each connected subgraph
-                if sub_node in allInf:                    # check if node is in the infected list and if it is, add all the nodes
-                    
-                    #inf[t].extend(subgraph.nodes())   # of the subgraph to the infected list.
-                    #inf[t] = [x for x in inf[t] if x not in allInf] # put in the infected dictionary only the new infected nodes
-                    
-                    allInf.extend(subgraph.nodes())
-                    allInf = list(set(allInf))
-                    break
-        
-        inf[t] = len(allInf[:]) # copy variable, not bind
-        #seedNodeInf.append(allInf)
+        if t not in timeD:
+            inf[t] = len(allInf[:])
+        elif len(allInf)==total_number_of_nodes:
+            inf[t] = total_number_of_nodes
+        else:
+            G = create_graph(timeD[t]) # Create the graph that corresponds to this time
+            
+            graphs = list(nx.connected_component_subgraphs(G)) # find the connected subgraphs
+            
+            for subgraph in graphs:
+                for sub_node in subgraph.nodes():             # for each node in each connected subgraph
+                    if sub_node in allInf:                    # check if node is in the infected list and if it is, add all the nodes
+                        
+                        #inf[t].extend(subgraph.nodes())   # of the subgraph to the infected list.
+                        #inf[t] = [x for x in inf[t] if x not in allInf] # put in the infected dictionary only the new infected nodes
+                        
+                        allInf.extend(subgraph.nodes())
+                        allInf = list(set(allInf))
+                        break
+            
+            inf[t] = len(allInf[:]) # copy variable, not bind
+            #seedNodeInf.append(allInf)
     nodesD.append(inf)
-
+    #print nodesD    
 end = time.time()
 print(end - start)
 
@@ -135,11 +155,10 @@ for t in nodesD[0]:   # for all times
     avg[t] = np.mean(timeList)
     var[t] = np.std(timeList)
 
-save_obj(avg, "average9")
-save_obj(var, "var9")
-
-plot_Dict(avg, "red")
-plot_Dict(var, "green")
+#save_obj(avg, "average9")
+#save_obj(var, "var9")
+plot_Dict(avg, var ,"red")
+#plot_Dict(var, "green")
 plt.show()
 
 #############################################
@@ -149,12 +168,14 @@ plt.show()
 infl =[]
 rankVar = (80*total_number_of_nodes)/100
 for i in range(0,len(nodesD)):
-    #print i, nodesD[i]#, nodesD[i][k]
-    #infl[i]
     infl.append((i, min(k for k in nodesD[i] if nodesD[i][k] >= rankVar))) #[(node, time),..]
+
 R =  [int(tup[0]) for tup in sorted(infl, key=lambda x: x[1])] #Ranking of influence
 
-save_obj(R, "R10")
+#save_obj(infl, "RTuple")
+
+#save_obj(R, "R10")
+
 ########################################
 # (11) Degree & Clustering Coefficient #
 ########################################
@@ -169,15 +190,17 @@ clustD = nx.clustering(aggr_graph)
 for i in range(0, len(degreeList)-1):
     degreeTupleList.append((i,degreeList[i]))
 D =  [int(tup[0]) for tup in sorted(degreeTupleList, key=lambda x: x[1], reverse=True)]
-#print degreeList
-save_obj(D, "R11")
+#save_obj(degreeTupleList, "Dtuple10")
+
+print D#print degreeList
+#save_obj(D, "D10")
 
 # transform clust. coef. list into a sorted ordered list of nodes according to clust. coef.
 for i in clustD:
     clustTupleList.append((i, clustD[i]))
 C = [int(tup[0]) for tup in sorted(clustTupleList, key=lambda x: x[1], reverse=True)]
 #print clustList
-save_obj(C, "R11")
+#save_obj(C, "C10")
 
 #######################
 # Computation of rRDf #
@@ -186,9 +209,9 @@ rRDf = {}
 for f in np.arange(0.05,0.55,0.05):
     print f
     lastElement = int(f*len(D))
-    rRDf[f] = len(intersect(R[:lastElement], D[:lastElement]))/len(R[:lastElement])
+    rRDf[f] = float(len(intersect(R[:lastElement], D[:lastElement])))/float(len(R[:lastElement]))
     #print f, rRDf[f]
-#print rRDf
+print rRDf
 
 ######################
 # Computation of rRCf#
@@ -197,10 +220,11 @@ rRCf = {}
 for f in np.arange(0.05,0.55,0.05):
     print f
     lastElement = int(f*len(C))
-    rRDf[f] = len(intersect(R[:lastElement], C[:lastElement]))/len(R[:lastElement])
+    rRCf[f] = float(len(intersect(R[:lastElement], C[:lastElement])))/float(len(R[:lastElement]))
 
-save_obj(rRDf, "rRDf11")
-save_obj(rRCf, "rRCf11")
+#save_obj(rRDf, "rRDf11")
+#save_obj(rRCf, "rRCf11")
+
 
 plot_Dict(rRDf, "red")
 plot_Dict(rRCf, "green")
@@ -211,10 +235,52 @@ plt.show()
 # (12) Other centrality metrics#
 ################################
 
-#Betweeness ????
+#Temporal????
+#I can also do Betweeness
 
-#A temporal metric??? 
+#########################
+#Closeness of Aggregated#
+#########################
+rRCLf = {}
+clossAggTupleList = []
+
+clossAgg = nx.closeness_centrality(aggr_graph)
+for i in clossAgg:
+    clossAggTupleList.append((i, clossAgg[i]))
+
+Cl = [int(tup[0]) for tup in sorted(clossAggTupleList, key=lambda x: x[1], reverse=True)]
+
+for f in np.arange(0.05,0.55,0.05):
+    print f
+    lastElement = int(f*len(Cl))
+    rRCLf[f] = float(len(intersect(R[:lastElement], Cl[:lastElement])))/float(len(R[:lastElement]))
+
+#save_obj(rRCLf, "rRCf11")
+
+#plot_Dict(rRDf, "red")
+#plot_Dict(rRCf, "green")
+#plot_Dict(rRCLf, "yellow")
+
+#plt.show()
+
+#################
+#Temporal Degree#
+#################
+
+
 
 ################################
 # (13) What can be improved?   #
 ################################
+
+#------------
+
+
+#####
+# C #
+#####
+
+aggr_random = create_edgelist_per_random_time("data.csv")
+#G2 is exactly the same as Gdata except that the time
+#stamps describing when each link appears in G data are randomlized in G2
+

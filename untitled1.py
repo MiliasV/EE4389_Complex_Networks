@@ -88,13 +88,6 @@ g.degree_distribution()
 layout = g.layout("kk")
 
 
-#Well i decided that the best option to build the graph was the free scale
-#because we have a well defined network, that means that we know where each
-#node should be connected to each other. The other two graph methods, implied
-#that we need to know a probability that a connection can happen and given the 
-#data set, we do not have a probability that a connection might happen, we know
-#perfectly in which position each node is.
-
 #Question 3
 
 #What is the degree correlation (assortativity)?  What is its physical meaning

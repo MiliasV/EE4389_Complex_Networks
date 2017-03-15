@@ -30,7 +30,7 @@ def create_graph(edgeList):
         G.add_edge(edge[0], edge[1])
     return G
 
-def create_edgelist_per_time(file): #create edgelist 
+def create_edgelist_per_time(file, timeD): #create edgelist 
     with open(file, "rb") as csvfile:
         mydata = csv.reader(csvfile, delimiter=',', quotechar='|')
         for row in mydata:
@@ -80,6 +80,25 @@ def create_aggr_network(file):
 
 def intersect(a, b):
     return list(set(a) & set(b))
+
+def temporal_degree(time_dict):
+    for t in range(1,max(timeD)+1):
+        Gt = create_graph(timeD[t])
+        tempDegreeList = list(Gt.degree(Gt.nodes()).values())
+        print tempDegreeList
+
+def compute_closeness_metric(clossD):    
+
+    for i in clossD:
+        clossTupleList.append((i, clossAgg[i]))    
+
+    Cl = [int(tup[0]) for tup in sorted(clossTupleList, key=lambda x: x[1], reverse=True)]    
+
+    for f in np.arange(0.05,0.55,0.05):
+        #print f
+        lastElement = int(f*len(Cl))
+        rRXf[f] = float(len(intersect(R[:lastElement], Cl[:lastElement])))/float(len(R[:lastElement]))
+    return rRXf
 #######################################################################################################################################################################
 ################################################################################################################################################################
 
@@ -87,7 +106,7 @@ def intersect(a, b):
 timeD = {}  # Dictionary with the edgelist per time  {"0":[{1,2},(5,6)...], "1":[(4,7)...]...}
 nodesD = [] # Dictionary which contains an inf{} per node
 
-create_edgelist_per_time("data.csv")      # this could have been done only once. However, it is faster o build the edgelist each time 
+create_edgelist_per_time("data.csv", timeD)      # this could have been done only once. However, it is faster o build the edgelist each time 
 #save_obj(timeD, "edgelist_dictionary")   #than loading it.
 #save_obj(inf, "infected_dictionary")
 #timeD = load_obj("edgelist_dictionary")
@@ -111,7 +130,7 @@ for node in range(1, total_number_of_nodes+1):
     
 #    for t in timeD: #Creating the network topology per time
     for t in range(1,max(timeD)+1): #Creating the network topology per time
-        #print("time",t)
+        #print("timesme",t)
         # if all nodes infected stop
         if t not in timeD:
             inf[t] = len(allInf[:])
@@ -235,52 +254,28 @@ plt.show()
 # (12) Other centrality metrics#
 ################################
 
-#Temporal????
-#I can also do Betweeness
-
 #########################
 #Closeness of Aggregated#
 #########################
 rRCLf = {}
 clossAggTupleList = []
 
-clossAgg = nx.closeness_centrality(aggr_graph)
+clossAgg = nx.closeness_centrality(aggr_graph) # or call function
 for i in clossAgg:
     clossAggTupleList.append((i, clossAgg[i]))
 
-Cl = [int(tup[0]) for tup in sorted(clossAggTupleList, key=lambda x: x[1], reverse=True)]
+Cl = [int(tup[0]) for tup in sorted(clossAggTupleList, key=lambda x: x[1], reverse=False)]
 
 for f in np.arange(0.05,0.55,0.05):
     print f
     lastElement = int(f*len(Cl))
     rRCLf[f] = float(len(intersect(R[:lastElement], Cl[:lastElement])))/float(len(R[:lastElement]))
 
-#save_obj(rRCLf, "rRCf11")
+
+save_obj(rRCLf, "rRCf11")
 
 #plot_Dict(rRDf, "red")
 #plot_Dict(rRCf, "green")
 #plot_Dict(rRCLf, "yellow")
 
 #plt.show()
-
-#################
-#Temporal Degree#
-#################
-
-
-
-################################
-# (13) What can be improved?   #
-################################
-
-#------------
-
-
-#####
-# C #
-#####
-
-aggr_random = create_edgelist_per_random_time("data.csv")
-#G2 is exactly the same as Gdata except that the time
-#stamps describing when each link appears in G data are randomlized in G2
-

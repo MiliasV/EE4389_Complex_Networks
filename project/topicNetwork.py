@@ -16,6 +16,21 @@ import statistics
 
 import networkFunctions as nF
 
+from datetime import date, datetime, timedelta
+import monthdelta
+
+
+# create graph from the edgeList
+def create_graph(edgeList, type):
+    if type==0:
+        G=nx.Graph()
+    else:
+        G = nx.DiGraph() 
+    for edge in edgeList:
+        G.add_edge(edge[0], edge[1])
+    return G
+
+
 def create_edgelist_per_time(file): #create edgelist 
     timeD = {}  # Dictionary with the edgelist per time  {"0":[(1,2),(5,6)...], "1":[(4,7)...]...}
     with open(file, "rt") as csvfile:
@@ -35,14 +50,18 @@ def create_edgelist_per_time(file): #create edgelist
                     timeD[t].append((vertex1, vertex2))
     return timeD
 
-def plot_Dict(d, mycolor):
-    for t in d:
-        #plt.plot(t,d[t], '-o',color = mycolor)#, s=50)
-        lists = sorted(d.items()) # sorted by key, return a list of tuples
+def plot_Dict(d, mycolor, topic, label):
+    lists = sorted(d.items()) # sorted by key, return a list of tuples
+    print(lists)
+    x, y = zip(*lists) # unpack a list of pairs into two tuples
+    x = list(range(1,len(d)+1))
+    plt.figure()
+    plt.plot(x, y,"-o", color=mycolor)
+    plt.ylabel(label)
+    plt.xlabel('Year-Month')
+    path = 'images/' + topic + '/' + label + '.png'
+    plt.savefig(path)
 
-        x, y = zip(*lists) # unpack a list of pairs into two tuples
-
-        plt.plot(x, y,"-o", color=mycolor)
 
         #plt.errorbar(t, d[t], err[t],  fmt='o', color=mycolor)
 
@@ -52,66 +71,48 @@ def average_degree(degree_dictionary):
     mean_ = statistics.mean(numbers)
     return mean_
 
+def main():
+    topicList =  ['json', 'angularjs','go', 'reactjs', 'ruby', 'swift'] 
 
-timeD = create_edgelist_per_time("data/ruby-on-rails.csv") #edgelist per time
-nodeD = {}      # number of nodes per time
-edgeD = {}      #number of edges per time
-degreeD = {}    #number of avg degree per time
-subgD = {}      #number of subgraphs per time
-idMaxDegreeD = {}
-maxDegreeD = {}
-# for each temporal graph
-for time in timeD:
-    G = nF.create_graph(timeD[time])
-    nodeD[time] = len(G.nodes())
-    edgeD[time] = len(G.edges())
-    degree = nx.degree_centrality(G)
-    degreeD[time] = average_degree(degree)
-    subgD[time] = len(list(nx.connected_component_subgraphs(G)))
-    idMaxDegreeD[time] = max(degree.keys(), key=(lambda key: degree[key]))
-    maxDegreeD[time] = degree[idMaxDegreeD[time]]
-    print("######### TIME:",time)
-    print("Nodes:", len(G.nodes()))
-    print("Edges:",len(G.edges()))
-    print("degree:",degreeD[time])
-    print("subg:",subgD[time])
-    print("###########################################")
+    for topic in topicList  :
+        timeD = create_edgelist_per_time("data/json.csv") #edgelist per time
+        nodeD = {}      # number of nodes per time
+        edgeD = {}      #number of edges per time
+        degreeD = {}    #number of avg degree per time
+        subgD = {}      #number of subgraphs per time
+        idMaxDegreeD = {}
+        maxDegreeD = {}
+        clustD = {}     
 
-plt.figure(1)
-plot_Dict(nodeD,"red")
-plot_Dict(edgeD,"blue")
-plt.ylabel('#Nodes and #Edges')
-plt.xlabel('Year-Month')
-#plt.show()
+        # for each temporal graph
+        for time in timeD:
+            G = create_graph(timeD[time],0)
+            nodeD[time] = len(G.nodes())
+            edgeD[time] = len(G.edges())
+            degree = nx.degree_centrality(G)
+            degreeD[time] = average_degree(degree)
+            subgD[time] = nx.number_connected_components(G)
+            idMaxDegreeD[time] = max(degree.keys(), key=(lambda key: degree[key]))
+            maxDegreeD[time] = degree[idMaxDegreeD[time]]
+            clustD[time] = nx.average_clustering(G)
+            print("######### TIME:",time)
+            print("Nodes:", len(G.nodes()))
+            print("Edges:",len(G.edges()))
+            print("degree:",degreeD[time])
+            print("subg:",subgD[time])
+            print("###########################################")    
+            
 
-plt.figure(2)
-plot_Dict(degreeD,"green")
-plt.ylabel('Average Degree of nodes')
-plt.xlabel('Year-Month')
-#plt.show()
+        plot_Dict(nodeD, "red", topic, "nodes")
+        plot_Dict(edgeD, "green", topic, "edges")
+        plot_Dict(degreeD, "grey", topic, "Avgdegree")
+        plot_Dict(subgD, "black", topic, "subgraphs")
+        plot_Dict(idMaxDegreeD, "red", topic, "id")
+        plot_Dict(maxDegreeD, "red", topic, "maxDegree")
+        plot_Dict(clustD, "red", topic, "Avgclust")
 
-plt.figure(3)
-plot_Dict(subgD,"grey")
-plt.ylabel('Number of connected components')
-plt.xlabel('Year-Month')
+if __name__ == "__main__":
+    main()
 
-plt.figure(4)
-plot_Dict(idMaxDegreeD,"pink")
-plt.ylabel('Id with Max degree')
-plt.xlabel('Year-Month')
-
-plt.figure(5)
-plot_Dict(maxDegreeD,"yellow")
-plt.ylabel('Max degree')
-plt.xlabel('Year-Month')
-plt.show()
-
-
-# Foolin around
-#G = nx.DiGraph()
-#G = nx.complete_graph(20)
-#G.add_edge(1,2)
-#print(nx.degree_centrality(G))
-#print(nx.closeness_centrality(G))
 #nx.draw_networkx(G)
 #plt.show()

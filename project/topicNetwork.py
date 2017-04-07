@@ -52,7 +52,6 @@ def create_edgelist_per_time(file): #create edgelist
 
 def plot_Dict(d, mycolor, topic, label):
     lists = sorted(d.items()) # sorted by key, return a list of tuples
-    print(lists)
     x, y = zip(*lists) # unpack a list of pairs into two tuples
     x = list(range(1,len(d)+1))
     plt.figure()
@@ -61,9 +60,8 @@ def plot_Dict(d, mycolor, topic, label):
     plt.xlabel('Year-Month')
     path = 'images/' + topic + '/' + label + '.png'
     plt.savefig(path)
+    plt.close("all")
 
-
-        #plt.errorbar(t, d[t], err[t],  fmt='o', color=mycolor)
 
 def average_degree(degree_dictionary):
     #d=[float(sum(values)) / len(values) for key, values in degree_dictionary.items()]
@@ -72,10 +70,11 @@ def average_degree(degree_dictionary):
     return mean_
 
 def main():
-    topicList =  ['json', 'angularjs','go', 'reactjs', 'ruby', 'swift'] 
+    topicList =  ['json', 'angularjs','go', 'reactjs', 'ruby-on-rails', 'swift'] 
 
     for topic in topicList  :
-        timeD = create_edgelist_per_time("data/json.csv") #edgelist per time
+        data_path = 'data/' + topic + '.csv'
+        timeD = create_edgelist_per_time(data_path) #edgelist per time
         nodeD = {}      # number of nodes per time
         edgeD = {}      #number of edges per time
         degreeD = {}    #number of avg degree per time
@@ -87,6 +86,11 @@ def main():
         # for each temporal graph
         for time in timeD:
             G = create_graph(timeD[time],0)
+            if topic=="json":
+                save_path = 'images/json/'+ str(time) +'.jpg'
+                nx.draw_networkx(G, node_size=2, with_labels=False)
+                plt.savefig(save_path)
+
             nodeD[time] = len(G.nodes())
             edgeD[time] = len(G.edges())
             degree = nx.degree_centrality(G)
@@ -102,14 +106,16 @@ def main():
             print("subg:",subgD[time])
             print("###########################################")    
             
-
-        plot_Dict(nodeD, "red", topic, "nodes")
-        plot_Dict(edgeD, "green", topic, "edges")
-        plot_Dict(degreeD, "grey", topic, "Avgdegree")
-        plot_Dict(subgD, "black", topic, "subgraphs")
-        plot_Dict(idMaxDegreeD, "red", topic, "id")
-        plot_Dict(maxDegreeD, "red", topic, "maxDegree")
-        plot_Dict(clustD, "red", topic, "Avgclust")
+        nx.draw_networkx(G, node_size=2, with_labels=False)
+        plt.show()
+    
+        #plot_Dict(nodeD, "red", topic, "nodes")
+        #plot_Dict(edgeD, "green", topic, "edges")
+        #plot_Dict(degreeD, "grey", topic, "Avgdegree")
+        #plot_Dict(subgD, "black", topic, "subgraphs")
+        #plot_Dict(idMaxDegreeD, "red", topic, "id")
+        #plot_Dict(maxDegreeD, "red", topic, "maxDegree")
+        #plot_Dict(clustD, "red", topic, "Avgclust")
 
 if __name__ == "__main__":
     main()

@@ -5,5 +5,5 @@ First and second assignment of the course  EE4389 Modeling and Data Analysis in 
 Quick and dirty code version. Needs cleaning and structure.
 
 ### Second Assignment:Analysis of Stack Overflow Interactions
-![project_poster.pdf](poster.pdf)
+![project_poster.pdf](/assignment_2/poster.pdf)
 
